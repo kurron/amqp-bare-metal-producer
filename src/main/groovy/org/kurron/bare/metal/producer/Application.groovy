@@ -9,10 +9,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
 
 @SpringBootApplication
-class ProducerApplication {
+class Application {
 
 	static void main(String[] args) {
-		SpringApplication.run ProducerApplication, args
+		SpringApplication.run Application, args
 	}
 
 	@Bean
