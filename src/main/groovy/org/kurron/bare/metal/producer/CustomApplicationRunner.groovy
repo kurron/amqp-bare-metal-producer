@@ -8,6 +8,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
+import org.springframework.context.ConfigurableApplicationContext
 
 import java.security.SecureRandom
 
@@ -26,8 +27,10 @@ class CustomApplicationRunner implements ApplicationRunner {
      * Handles AMQP communications.
      */
     @Autowired
-    protected RabbitTemplate theTemplate
+    private RabbitTemplate theTemplate
 
+    @Autowired
+    private ConfigurableApplicationContext theContext
 
     private static String generateMessageID() {
         UUID.randomUUID().toString()
@@ -75,5 +78,6 @@ class CustomApplicationRunner implements ApplicationRunner {
             theTemplate.send( 'hard-coded-exchange-name', message )
         }
         log.info 'Publishing complete'
+        theContext.close()
     }
 }
