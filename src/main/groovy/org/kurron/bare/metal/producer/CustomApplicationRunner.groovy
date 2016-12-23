@@ -65,21 +65,26 @@ class CustomApplicationRunner implements ApplicationRunner {
 
     @Override
     void run(ApplicationArguments args) throws Exception {
-        int numberOfMessages = 1024
-        int payloadSize = 128
+        int numberOfMessages = 250000
+        int payloadSize = 1024
 
         log.info "Uploading ${numberOfMessages} messages with a payload size of ${payloadSize} to broker"
 
-        def buffer = new byte[payloadSize]
 
-        numberOfMessages.times {
-            if (0 == it % 10) {
-                log.info( "Processed {} messages", it as String )
-            }
-            randomize(buffer)
-            def message = createMessage(buffer, "application/json;tl-type=bare-metal;version=1.0.0")
-            theTemplate.send( theConfiguration.exchange, theConfiguration.routingKey, message )
+        def messages = (1..numberOfMessages).collect {
+            def buffer = new byte[payloadSize]
+            randomize( buffer )
+            createMessage( buffer, "application/json;tl-type=bare-metal;version=1.0.0" )
         }
+
+        log.info "Created ${messages.size()} messages. Sending them to stream."
+
+        long completed = messages.parallelStream()
+                                 .map( { theTemplate.send( theConfiguration.exchange, theConfiguration.routingKey, it ) } )
+                                 .count()
+
+        log.info( 'Completed: {}', completed )
+
         log.info 'Publishing complete'
         theContext.close()
     }
