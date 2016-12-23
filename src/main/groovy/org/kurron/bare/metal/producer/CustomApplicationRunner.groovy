@@ -62,7 +62,7 @@ class CustomApplicationRunner implements ApplicationRunner {
 
     @Override
     void run(ApplicationArguments args) throws Exception {
-        int numberOfMessages = 20
+        int numberOfMessages = 1024
         int payloadSize = 128
 
         log.info "Uploading ${numberOfMessages} messages with a payload size of ${payloadSize} to broker"
