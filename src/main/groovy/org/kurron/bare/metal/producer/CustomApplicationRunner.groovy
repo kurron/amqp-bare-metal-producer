@@ -1,5 +1,6 @@
 package org.kurron.bare.metal.producer
 
+import groovy.util.logging.Slf4j
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageBuilder
 import org.springframework.amqp.core.MessageDeliveryMode
@@ -13,6 +14,7 @@ import java.security.SecureRandom
 /**
  * Handles command-line arguments.
  */
+@Slf4j
 class CustomApplicationRunner implements ApplicationRunner {
 
     /**
@@ -59,21 +61,19 @@ class CustomApplicationRunner implements ApplicationRunner {
     void run(ApplicationArguments args) throws Exception {
         int numberOfMessages = 20
         int payloadSize = 128
-        def messageType = 'bare-metal'
 
-        println "Uploading ${numberOfMessages} messages with a payload size of ${payloadSize} to Mold-E"
+        log.info "Uploading ${numberOfMessages} messages with a payload size of ${payloadSize} to broker"
 
         def buffer = new byte[payloadSize]
 
         numberOfMessages.times {
             if (0 == it % 10) {
-                print '.'
+                log.info( "Processed {} messages", it as String )
             }
             randomize(buffer)
-            def message = createMessage(buffer, "application/json;tl-type=${messageType};version=1.0.0")
+            def message = createMessage(buffer, "application/json;tl-type=bare-metal;version=1.0.0")
             theTemplate.send( 'hard-coded-exchange-name', message )
         }
-        println()
-        'Publishing complete'
+        log.info 'Publishing complete'
     }
 }
