@@ -75,7 +75,7 @@ class CustomApplicationRunner implements ApplicationRunner {
             }
             randomize(buffer)
             def message = createMessage(buffer, "application/json;tl-type=bare-metal;version=1.0.0")
-            theTemplate.send( 'hard-coded-exchange-name', message )
+            theTemplate.send( 'hard-coded-exchange-name', 'bare-metal-consumer', message )
         }
         log.info 'Publishing complete'
         theContext.close()
