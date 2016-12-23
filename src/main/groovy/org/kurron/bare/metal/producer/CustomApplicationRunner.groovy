@@ -32,6 +32,9 @@ class CustomApplicationRunner implements ApplicationRunner {
     @Autowired
     private ConfigurableApplicationContext theContext
 
+    @Autowired
+    private ApplicationProperties theConfiguration
+
     private static String generateMessageID() {
         UUID.randomUUID().toString()
     }
@@ -75,7 +78,7 @@ class CustomApplicationRunner implements ApplicationRunner {
             }
             randomize(buffer)
             def message = createMessage(buffer, "application/json;tl-type=bare-metal;version=1.0.0")
-            theTemplate.send( 'hard-coded-exchange-name', 'bare-metal-consumer', message )
+            theTemplate.send( theConfiguration.exchange, theConfiguration.routingKey, message )
         }
         log.info 'Publishing complete'
         theContext.close()
