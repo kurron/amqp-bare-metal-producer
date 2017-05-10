@@ -10,18 +10,13 @@ import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.ConfigurableApplicationContext
 
-import java.security.SecureRandom
+import java.util.concurrent.ThreadLocalRandom
 
 /**
  * Handles command-line arguments.
  */
 @Slf4j
 class CustomApplicationRunner implements ApplicationRunner {
-
-    /**
-     * Random number generator.
-     */
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom()
 
     /**
      * Handles AMQP communications.
@@ -48,42 +43,46 @@ class CustomApplicationRunner implements ApplicationRunner {
     }
 
     private static void randomize(byte[] buffer) {
-        SECURE_RANDOM.nextBytes(buffer)
+        ThreadLocalRandom.current().nextBytes(buffer)
     }
 
     private static Message createMessage(byte[] payload,
-                                    String contentType) {
+                                         String contentType) {
         MessageBuilder.withBody(payload)
                 .setContentType(contentType)
                 .setMessageId(generateMessageID())
                 .setTimestamp(generateTimeStamp())
-                .setAppId( 'bare-metal-producer' )
-                .setCorrelationIdString( generateCorrelationID() )
+                .setAppId('bare-metal-producer')
+                .setCorrelationIdString(generateCorrelationID())
                 .setDeliveryMode(MessageDeliveryMode.NON_PERSISTENT)
                 .build()
     }
 
     @Override
-    void run(ApplicationArguments args) throws Exception {
-        int numberOfMessages = 250000
-        int payloadSize = 1024
+    void run(ApplicationArguments arguments) {
+
+        def messageCount = Optional.ofNullable(arguments.getOptionValues('number-of-messages')).orElse(['100'])
+        def messageSize = Optional.ofNullable(arguments.getOptionValues('payload-size')).orElse(['1024'])
+
+        def numberOfMessages = messageCount.first().toInteger()
+        def payloadSize = messageSize.first().toInteger()
 
         log.info "Uploading ${numberOfMessages} messages with a payload size of ${payloadSize} to broker"
 
 
         def messages = (1..numberOfMessages).collect {
             def buffer = new byte[payloadSize]
-            randomize( buffer )
-            createMessage( buffer, "application/json;tl-type=bare-metal;version=1.0.0" )
+            randomize(buffer)
+            createMessage(buffer, "application/octet-stream")
         }
 
         log.info "Created ${messages.size()} messages. Sending them to stream."
 
         long completed = messages.parallelStream()
-                                 .map( { theTemplate.send( theConfiguration.exchange, theConfiguration.routingKey, it ) } )
-                                 .count()
+                .map({ theTemplate.send(theConfiguration.exchange, theConfiguration.routingKey, it) })
+                .count()
 
-        log.info( 'Completed: {}', completed )
+        log.info('Completed: {}', completed)
 
         log.info 'Publishing complete'
         theContext.close()
