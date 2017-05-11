@@ -78,11 +78,14 @@ class CustomApplicationRunner implements ApplicationRunner {
 
         log.info "Created ${messages.size()} messages. Sending them to stream."
 
+        long start = System.currentTimeMillis()
         long completed = messages.parallelStream()
                 .map({ theTemplate.send(theConfiguration.exchange, theConfiguration.routingKey, it) })
                 .count()
+        long stop = System.currentTimeMillis()
 
-        log.info('Completed: {}', completed)
+        long duration = stop - start
+        log.info('Published {} messages in {} milliseconds', completed, duration )
 
         log.info 'Publishing complete'
         theContext.close()
