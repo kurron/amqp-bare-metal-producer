@@ -16,7 +16,7 @@ Docker will automatically install the newly built image into the cache.
 
 ## Launching The Image
 
-`./run/sh` will launch the image with default values.  The script takes various arguments that control the
+`./run-container.sh` will launch the image with default values.  The script takes various arguments that control the
 application's behavior.  Examine the script to see the current list of arguments.
 
 # Troubleshooting
