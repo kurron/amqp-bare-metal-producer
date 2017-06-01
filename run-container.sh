@@ -4,7 +4,7 @@ HOST=${1:-localhost}
 VHOST=${2:-/}
 USERNAME=${3:-guest}
 PASSWORD=${4:-guest}
-MESSAGE_COUNT=${5:-2500}
+MESSAGE_COUNT=${5:-524288}
 PAYLOAD_SIZE=${6:-1024}
 
 CMD="docker run \
@@ -18,7 +18,6 @@ CMD="docker run \
             --name amqp-producer \
             --network host \
             --rm \
-            --tty \
             kurron/amqp-bare-metal-producer:latest \
             --number-of-messages=${MESSAGE_COUNT} \
             --payload-size=${PAYLOAD_SIZE}"
