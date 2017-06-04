@@ -45,17 +45,13 @@ class CustomApplicationRunner implements ApplicationRunner {
         Calendar.getInstance(TimeZone.getTimeZone('UTC')).time
     }
 
-    private static void randomize(byte[] buffer) {
-        ThreadLocalRandom.current().nextBytes(buffer)
-    }
-
-    private static byte[] randomizeBytes( int size ) {
+    private static byte[] randomizeBytes(int size) {
         def bytes = new byte[size]
         ThreadLocalRandom.current().nextBytes(bytes)
         bytes
     }
 
-    private static Message createMessage( byte[] payload,
+    private static Message createMessage(byte[] payload,
                                          String contentType) {
         MessageBuilder.withBody(payload)
                 .setContentType(contentType)
@@ -71,42 +67,46 @@ class CustomApplicationRunner implements ApplicationRunner {
     void run(ApplicationArguments arguments) {
 
         def messageCount = Optional.ofNullable(arguments.getOptionValues('number-of-messages')).orElse(['100'])
-        def messageSize = Optional.ofNullable( arguments.getOptionValues('payload-size') ).orElse( ['1024'] )
+        def messageSize = Optional.ofNullable(arguments.getOptionValues('payload-size')).orElse(['1024'])
+        def threadCount = Optional.ofNullable(arguments.getOptionValues('thread-count')).orElse(['32'])
 
         def numberOfMessages = messageCount.first().toInteger()
         def payloadSize = messageSize.first().toInteger()
+        def poolSize = threadCount.first().toInteger()
 
-        log.info "Uploading ${numberOfMessages} messages with a payload size of ${payloadSize} to broker"
+        log.info "Publishing ${numberOfMessages} messages with a payload size of ${payloadSize} to broker"
 
-
-        def payloads = (1..numberOfMessages).collect {
-            randomizeBytes( messageSize.first() as int )
-        }
-        log.info "Created ${messageCount} ${payloads.size()} byte payloads. Sending them to stream."
-
-        def pool = Executors.newFixedThreadPool(64 )
+        def sequence = Observable.fromIterable ( [1..numberOfMessages].first() )
+        def pool = Executors.newFixedThreadPool( poolSize )
         def scheduler = Schedulers.from( pool )
 
-        def mapper = { byte[] payload ->
-            def message = createMessage( payload, "application/octet-stream")
+        def mapper = {
+            def payload = randomizeBytes( payloadSize )
+            def message = createMessage(payload, "application/octet-stream")
             def callable = {
-                theTemplate.send( theConfiguration.exchange, theConfiguration.routingKey, message )
+                theTemplate.send(theConfiguration.exchange, theConfiguration.routingKey, message)
                 Observable.empty()
             }
-            Observable.fromCallable( callable ).subscribeOn( scheduler )
+            Observable.fromCallable(callable).subscribeOn(scheduler)
         }
 
         long start = System.currentTimeMillis()
-        def completed = Observable.fromIterable( payloads )
-                                  .flatMap( mapper )
-                                  .count()
+        def completed = sequence.flatMap(mapper).count()
         long stop = System.currentTimeMillis()
 
         long duration = stop - start
-        log.info( 'Published {} messages in {} milliseconds', completed.blockingGet(), duration )
+        log.info('Published {} messages in {} milliseconds', completed.blockingGet(), duration)
 
         log.info 'Publishing complete'
         pool.shutdown()
         theContext.close()
+    }
+
+    private static List<byte[]> createPayloads( int numberOfMessages, int payloadSize, int messageCount ) {
+        def payloads = (1..numberOfMessages).collect {
+            randomizeBytes(payloadSize)
+        }
+        log.info "Created ${messageCount} ${payloads.size()} byte payloads. Sending them to stream."
+        payloads
     }
 }
