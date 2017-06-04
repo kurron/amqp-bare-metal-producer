@@ -6,6 +6,7 @@ USERNAME=${3:-guest}
 PASSWORD=${4:-guest}
 MESSAGE_COUNT=${5:-524288}
 PAYLOAD_SIZE=${6:-1024}
+THREAD_COUNT=${7:-32}
 
 CMD="docker run \
             --cpus 1 \
@@ -20,7 +21,8 @@ CMD="docker run \
             --rm \
             kurron/amqp-bare-metal-producer:latest \
             --number-of-messages=${MESSAGE_COUNT} \
-            --payload-size=${PAYLOAD_SIZE}"
+            --payload-size=${PAYLOAD_SIZE} \
+            --thread-count=${THREAD_COUNT}"
 
 echo ${CMD}
 ${CMD}
