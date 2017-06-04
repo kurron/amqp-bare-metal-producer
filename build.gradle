@@ -63,7 +63,8 @@ repositories {
 defaultTasks = ['clean','build']
 
 dependencies {
-  compile 'org.codehaus.groovy:groovy-all::indy'
-	compile('org.springframework.boot:spring-boot-starter-amqp')
+    compile 'org.codehaus.groovy:groovy-all::indy'
+    compile('org.springframework.boot:spring-boot-starter-amqp')
+    compile('io.reactivex.rxjava2:rxjavafx:2.1.0')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }

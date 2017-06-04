@@ -1,6 +1,9 @@
 package org.kurron.bare.metal.producer
 
 import groovy.util.logging.Slf4j
+import io.reactivex.Observable
+import io.reactivex.Single
+import io.reactivex.schedulers.Schedulers
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageBuilder
 import org.springframework.amqp.core.MessageDeliveryMode
@@ -10,6 +13,7 @@ import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.ConfigurableApplicationContext
 
+import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
 
 /**
@@ -46,7 +50,11 @@ class CustomApplicationRunner implements ApplicationRunner {
         ThreadLocalRandom.current().nextBytes(buffer)
     }
 
-    private static Message createMessage(byte[] payload,
+    private static void randomizeBytes( int size ) {
+        ThreadLocalRandom.current().nextBytes( new byte[size] )
+    }
+
+    private static Message createMessage( byte[] payload,
                                          String contentType) {
         MessageBuilder.withBody(payload)
                 .setContentType(contentType)
@@ -75,19 +83,21 @@ class CustomApplicationRunner implements ApplicationRunner {
             randomize(buffer)
             createMessage(buffer, "application/octet-stream")
         }
-
         log.info "Created ${messages.size()} messages. Sending them to stream."
 
+        def pool = Executors.newFixedThreadPool(64)
+        def scheduler = Schedulers.from( pool )
         long start = System.currentTimeMillis()
-        long completed = messages.parallelStream()
-                .map({ theTemplate.send(theConfiguration.exchange, theConfiguration.routingKey, it) })
-                .count()
+        Single<Long> completed = Observable.fromIterable( messages )
+                                           .flatMap( { Message message -> Observable.fromCallable( { theTemplate.send( theConfiguration.exchange, theConfiguration.routingKey, message ) ; Observable.empty() } ).subscribeOn( scheduler ) } )
+                                           .count()
         long stop = System.currentTimeMillis()
 
         long duration = stop - start
-        log.info('Published {} messages in {} milliseconds', completed, duration )
+        log.info( 'Published {} messages in {} milliseconds', completed.blockingGet(), duration )
 
         log.info 'Publishing complete'
+        pool.shutdown()
         theContext.close()
     }
 }
