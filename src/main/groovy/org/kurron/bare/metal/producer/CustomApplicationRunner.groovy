@@ -12,6 +12,7 @@ import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.ConfigurableApplicationContext
 
+import java.time.Duration
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
 
@@ -77,6 +78,8 @@ class CustomApplicationRunner implements ApplicationRunner {
         log.info "Publishing ${numberOfMessages} messages with a payload size of ${payloadSize} to broker"
 
         def sequence = Observable.fromIterable ( [1..numberOfMessages].first() )
+
+        log.info( 'Using a scheduler with a thread pool size of {}', poolSize )
         def pool = Executors.newFixedThreadPool( poolSize )
         def scheduler = Schedulers.from( pool )
 
@@ -91,22 +94,15 @@ class CustomApplicationRunner implements ApplicationRunner {
         }
 
         long start = System.currentTimeMillis()
-        def completed = sequence.flatMap(mapper).count()
+        def completed = sequence.flatMap(mapper).count().blockingGet()
         long stop = System.currentTimeMillis()
 
         long duration = stop - start
-        log.info('Published {} messages in {} milliseconds', completed.blockingGet(), duration)
+        def durationISO = Duration.ofMillis( duration )
+        log.info('Published {} messages in {}', completed, durationISO as String )
 
         log.info 'Publishing complete'
         pool.shutdown()
         theContext.close()
-    }
-
-    private static List<byte[]> createPayloads( int numberOfMessages, int payloadSize, int messageCount ) {
-        def payloads = (1..numberOfMessages).collect {
-            randomizeBytes(payloadSize)
-        }
-        log.info "Created ${messageCount} ${payloads.size()} byte payloads. Sending them to stream."
-        payloads
     }
 }
