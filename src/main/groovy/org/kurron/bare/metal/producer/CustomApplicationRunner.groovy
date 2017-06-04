@@ -2,7 +2,6 @@ package org.kurron.bare.metal.producer
 
 import groovy.util.logging.Slf4j
 import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageBuilder
@@ -50,8 +49,10 @@ class CustomApplicationRunner implements ApplicationRunner {
         ThreadLocalRandom.current().nextBytes(buffer)
     }
 
-    private static void randomizeBytes( int size ) {
-        ThreadLocalRandom.current().nextBytes( new byte[size] )
+    private static byte[] randomizeBytes( int size ) {
+        def bytes = new byte[size]
+        ThreadLocalRandom.current().nextBytes(bytes)
+        bytes
     }
 
     private static Message createMessage( byte[] payload,
@@ -70,7 +71,7 @@ class CustomApplicationRunner implements ApplicationRunner {
     void run(ApplicationArguments arguments) {
 
         def messageCount = Optional.ofNullable(arguments.getOptionValues('number-of-messages')).orElse(['100'])
-        def messageSize = Optional.ofNullable(arguments.getOptionValues('payload-size')).orElse(['1024'])
+        def messageSize = Optional.ofNullable( arguments.getOptionValues('payload-size') ).orElse( ['1024'] )
 
         def numberOfMessages = messageCount.first().toInteger()
         def payloadSize = messageSize.first().toInteger()
@@ -78,19 +79,27 @@ class CustomApplicationRunner implements ApplicationRunner {
         log.info "Uploading ${numberOfMessages} messages with a payload size of ${payloadSize} to broker"
 
 
-        def messages = (1..numberOfMessages).collect {
-            def buffer = new byte[payloadSize]
-            randomize(buffer)
-            createMessage(buffer, "application/octet-stream")
+        def payloads = (1..numberOfMessages).collect {
+            randomizeBytes( messageSize.first() as int )
         }
-        log.info "Created ${messages.size()} messages. Sending them to stream."
+        log.info "Created ${messageCount} ${payloads.size()} byte payloads. Sending them to stream."
 
-        def pool = Executors.newFixedThreadPool(64)
+        def pool = Executors.newFixedThreadPool(64 )
         def scheduler = Schedulers.from( pool )
+
+        def mapper = { byte[] payload ->
+            def message = createMessage( payload, "application/octet-stream")
+            def callable = {
+                theTemplate.send( theConfiguration.exchange, theConfiguration.routingKey, message )
+                Observable.empty()
+            }
+            Observable.fromCallable( callable ).subscribeOn( scheduler )
+        }
+
         long start = System.currentTimeMillis()
-        Single<Long> completed = Observable.fromIterable( messages )
-                                           .flatMap( { Message message -> Observable.fromCallable( { theTemplate.send( theConfiguration.exchange, theConfiguration.routingKey, message ) ; Observable.empty() } ).subscribeOn( scheduler ) } )
-                                           .count()
+        def completed = Observable.fromIterable( payloads )
+                                  .flatMap( mapper )
+                                  .count()
         long stop = System.currentTimeMillis()
 
         long duration = stop - start
