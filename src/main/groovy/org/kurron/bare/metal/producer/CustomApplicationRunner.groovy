@@ -68,7 +68,7 @@ class CustomApplicationRunner implements ApplicationRunner {
         def payloadSize = messageSize.first().toInteger()
         def poolSize = threadCount.first().toInteger()
 
-        log.info "Publishing ${numberOfMessages} messages with a payload size of ${payloadSize} to broker"
+        log.info "Publishing ${numberOfMessages} messages with a payload size of ${payloadSize} to the broker"
 
         def sequence = Observable.fromIterable ( [1..numberOfMessages].first() )
 
