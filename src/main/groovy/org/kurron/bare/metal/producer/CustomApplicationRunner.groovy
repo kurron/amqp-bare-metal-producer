@@ -14,7 +14,6 @@ import org.springframework.context.ConfigurableApplicationContext
 
 import java.time.Duration
 import java.util.concurrent.Executors
-import java.util.concurrent.ThreadLocalRandom
 
 /**
  * Handles command-line arguments.
@@ -44,12 +43,6 @@ class CustomApplicationRunner implements ApplicationRunner {
 
     private static Date generateTimeStamp() {
         Calendar.getInstance(TimeZone.getTimeZone('UTC')).time
-    }
-
-    private static byte[] randomizeBytes(int size) {
-        def bytes = new byte[size]
-        ThreadLocalRandom.current().nextBytes(bytes)
-        bytes
     }
 
     private static Message createMessage(byte[] payload,
@@ -84,7 +77,7 @@ class CustomApplicationRunner implements ApplicationRunner {
         def scheduler = Schedulers.from( pool )
 
         def mapper = {
-            def payload = randomizeBytes( payloadSize )
+            def payload = new byte[payloadSize]
             def message = createMessage(payload, "application/octet-stream")
             def callable = {
                 theTemplate.send(theConfiguration.exchange, theConfiguration.routingKey, message)
