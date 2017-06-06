@@ -13,8 +13,8 @@ CMD="docker run \
             --env consumer_modvalue=1000 \
             --env spring_rabbitmq_host=${HOST} \
             --env spring_rabbitmq_virtual-host=${VHOST} \
-            --env spring.rabbitmq.username=${USERNAME} \
-            --env spring.rabbitmq.password=${PASSWORD} \
+            --env spring_rabbitmq_username=${USERNAME} \
+            --env spring_rabbitmq_password=${PASSWORD} \
             --interactive  \
             --name amqp-producer \
             --network host \
