@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+mmetadata:
+    name: amqp-bare-metal-producer
+spec:
+    template:
+        metadata:
+            name: amqp-bare-metal-producer
+        spec:
+            containers:
+                - name: amqp-bare-metal-producer
+                  image: kurron/amqp-bare-metal-producer:latest
+                  args:
+                      - "--number-of-messages=$(NUMBER_OF_MESSAGES)"
+                      - "--payload-size=$(PAYLOAD_SIZE)"
+                      - "--thread-count=$(THREAD_COUNT)"
+                  env:
+                      - name: SPRING_RABBITMQ_HOST
+                        valueFrom:
+                            configMapKeyRef:
+                                key: host
+                                name: amqp-bare-metal-producer-configuration
+                      - name: CONSUMER_MODVALUE
+                        valueFrom:
+                            configMapKeyRef:
+                                key: modvalue
+                                name: amqp-bare-metal-producer-configuration
+                      - name: NUMBER_OF_MESSAGES
+                        valueFrom:
+                            configMapKeyRef:
+                                key: number-of-messages
+                                name: amqp-bare-metal-producer-configuration
+                      - name: SPRING_RABBITMQ_PASSWORD
+                        valueFrom:
+                            configMapKeyRef:
+                                key: password
+                                name: amqp-bare-metal-producer-configuration
+                      - name: PAYLOAD_SIZE
+                        valueFrom:
+                            configMapKeyRef:
+                                key: payload-size
+                                name: amqp-bare-metal-producer-configuration
+                      - name: THREAD_COUNT
+                        valueFrom:
+                            configMapKeyRef:
+                                key: thread-count
+                                name: amqp-bare-metal-producer-configuration
+                      - name: SPRING_RABBITMQ_USERNAME
+                        valueFrom:
+                            configMapKeyRef:
+                                key: username
+                                name: amqp-bare-metal-producer-configuration
+                      - name: SPRING_RABBITMQ_VIRTUAL-HOST
+                        valueFrom:
+                            configMapKeyRef:
+                                key: virtual-host
+                                name: amqp-bare-metal-producer-configuration
+            restartPolicy: Never
