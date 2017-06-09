@@ -1,6 +1,6 @@
 apiVersion: batch/v1
 kind: Job
-mmetadata:
+metadata:
     name: amqp-bare-metal-producer
 spec:
     template:
@@ -14,6 +14,7 @@ spec:
                       - "--number-of-messages=$(NUMBER_OF_MESSAGES)"
                       - "--payload-size=$(PAYLOAD_SIZE)"
                       - "--thread-count=$(THREAD_COUNT)"
+                      - "--spring.rabbitmq.virtual-host==$(SPRING_RABBITMQ_VIRTUAL_HOST)"
                   env:
                       - name: SPRING_RABBITMQ_HOST
                         valueFrom:
@@ -50,7 +51,7 @@ spec:
                             configMapKeyRef:
                                 key: username
                                 name: amqp-bare-metal-producer-configuration
-                      - name: SPRING_RABBITMQ_VIRTUAL-HOST
+                      - name: SPRING_RABBITMQ_VIRTUAL_HOST
                         valueFrom:
                             configMapKeyRef:
                                 key: virtual-host
