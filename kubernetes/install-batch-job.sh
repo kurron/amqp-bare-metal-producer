@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTALL="kubectl create --filename k8s-batch-job.yml"
+INSTALL="kubectl create --filename kubernetes/k8s-batch-job.yml"
 echo ${INSTALL}
 ${INSTALL}
 

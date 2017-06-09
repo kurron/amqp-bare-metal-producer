@@ -23,10 +23,12 @@ application's behavior.  Examine the script to see the current list of arguments
 
 ## Deploying as a Kubernetes batch job
 
-1. run `./create-config-map.sh` to install the configuration values into K8s.  You can either edit the script or
+1. `kubernetes/create-namespace.sh` to create a namespace, if you aren't using one already
+1. `kubernetes/set-namespace-as-default.sh` to create the namespace, if you aren't using one already
+1. `kubernetes/create-config-map.sh` to install the configuration values into K8s.  You can either edit the script or
 pass in the required information as arguments.
-1. run `kubectl create --filename k8s-batch-job.yml` to create and run the job
-1. run `kubectl get jobs` to check on its status
+1. `kubernetes/install-batch-job.sh` to create and run the job
+1. run `kubectl get jobs --show-all` to check on its status
 1. run `kubectl get pods --show-all` to see the completed pod
 1. run `kubectl logs amqp-bare-metal-producer` to see its output
 1. run `kubectl delete jobs/amqp-bare-metal-producer` to clean up
@@ -37,4 +39,3 @@ pass in the required information as arguments.
 This project is licensed under the [Apache License Version 2.0, January 2004](http://www.apache.org/licenses/).
 
 # List of Changes
-
