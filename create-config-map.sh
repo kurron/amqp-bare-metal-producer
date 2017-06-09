@@ -24,7 +24,7 @@ CREATE="kubectl create configmap ${CONFIGURATION} \
             --from-literal thread-count=${THREAD_COUNT}"
 
 echo ${CREATE}
-#${CREATE}
+${CREATE}
 
 GET="kubectl get configmaps ${CONFIGURATION} -o yaml"
 echo ${GET}
