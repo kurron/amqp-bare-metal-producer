@@ -30,7 +30,7 @@ pass in the required information as arguments.
 1. `kubernetes/install-batch-job.sh` to create and run the job
 1. run `kubectl get jobs --show-all` to check on its status
 1. run `kubectl get pods --show-all` to see the completed pod
-1. run `kubectl logs amqp-bare-metal-producer` to see its output
+1. run `kubectl logs <pod name>` to see its output
 1. run `kubectl delete jobs/amqp-bare-metal-producer` to clean up
 
 # Troubleshooting
